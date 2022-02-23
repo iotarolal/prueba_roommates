@@ -1,5 +1,3 @@
-/*
-
 const express = require('express');
 const axios = require('axios');
 const fs = require('fs').promises;
@@ -20,11 +18,17 @@ async function newroommate() {
         id : uuid.v4().slice(10),
         nombre : randomuser.name.first + + randomuser.name.last,
         debe:0,
-        recibe:0,
-        email: randomuser.email
-}
+        recibe:0
+    }
 return newuser;
 }
 
+
+async function validonewroommate(){
+// valido que no se repina el mismo nombre
+
+
+}
+
 module.exports = newroommate;
-*/
+

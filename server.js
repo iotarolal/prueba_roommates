@@ -1,5 +1,5 @@
 const enviar_email = require('./email.js');
-//const newroommate = require('./funciones.js');
+const newroommate = require('./funciones.js');
 const express = require('express');
 const axios = require('axios');
 const uuid = require('uuid');
@@ -9,22 +9,6 @@ const app = express();
 
 app.use(express.static('static'));
 app.use(express.urlencoded({extended:true}));
-
-
-async function newroommate() {
-
-    let randomuser = await axios.get("https://randomuser.me/api/");
-    randomuser = randomuser.data.results[0];
-
-    const newuser = {
-        //crea un identificador
-        id : uuid.v4().slice(10),
-        nombre : randomuser.name.first + + randomuser.name.last,
-        debe:0,
-        recibe:0,
-}
-return newuser;
-}
 
 
 // agregar roommate con post
@@ -74,18 +58,43 @@ app.post('/gasto', async (req, res) => {
     });
 });
 
-
-
 // obtengo datos de roommeantes 
 
 app.get('/roommates', async(req, res) => {
 
+    let bd = await fs.readFile("db.json", 'utf-8');
+    bd = JSON.parse(bd);
+
+    console.log(bd.roommates)
+
+    for (romme of bd.roommates) {
+        // filtrar los gastos DE ESE romme, y sumar sus valores
+        for (gasto of bd.gastos) {
+            if (gasto.roommate == romme.nombre) {
+
+                if (gasto.monto > 0) {
+                    console.log(gasto.monto);
+                    romme.recibe = romme.recibe + gasto.monto;
+
+                } else {
+                    romme.debe += gasto.monto;
+
+                }
+            }
+
+        }
+    }
+
+ //   console.log(romme.gastos);
+
+    res.send({ roommates: bd.roommates });
+
     // Leer informacion del archivo db
-    let db = await fs.readFile("db.json", 'utf-8');
-    db = JSON.parse(db);
+//    let db = await fs.readFile("db.json", 'utf-8');
+//    db = JSON.parse(db);
 
     // retorno  datos al index.html
-    res.send({roommates:db.roommates});
+ //   res.send({roommates:db.roommates});
 });
 
 // obtengo datos de gastos
@@ -141,34 +150,26 @@ app.put('/gasto', async (req, res) => {
 });
 
 
-// Put eliminados
+// delete gasto
 
 app.delete('/gasto', async (req, res) => {
 
-    let body;
-    req.on('data', (payload) => {
-        body = JSON.parse(payload);
-    });
+//    console.log('llego a eliminar gasto')
 
-    req.on('end', async() => {
+    const id = req.query.id;
+    console.log(id);
 
-        const id = req.query.id;
-        console.log(id);
+    // Leer informacion del archivo db
+    let db = await fs.readFile("db.json", 'utf-8');
+    db = JSON.parse(db);
 
-        // Leer informacion del archivo db
-        let db = await fs.readFile("db.json", 'utf-8');
-        db = JSON.parse(db);
+    const arraygastos =  db.gastos.filter(x => x.id !== id);
+    db.gastos=arraygastos
 
-        const arrayroommate =  db.roommates.filter(x => x.id !== id);
-        const arraygastos =  db.gastos.filter(x => x.id !== id);
-        db = arrayroommate.concat(arraygastos);
-//        const db1 =  db.filter(x => x.id !== id);
+    await fs.writeFile('db.json', JSON.stringify(db), 'utf-8');
 
-        await fs.writeFile('db.json', JSON.stringify(db), 'utf-8');
+    res.send(db);
 
-        res.send(db);
-
-    });
 });
 
 
