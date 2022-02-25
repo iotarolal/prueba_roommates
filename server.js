@@ -62,11 +62,11 @@ app.get('/roommates', async(req, res) => {
     let db = await fs.readFile("db.json", 'utf-8');
     db = JSON.parse(db);
 
+
     for (romme of db.roommates) {
         // filtrar los gastos DE ESE romme, y sumar sus valores
         for (gasto of db.gastos) {
             if (gasto.roommate == romme.nombre) {
-
                 if (gasto.monto > 0) {
                     romme.recibe = romme.recibe + gasto.monto;
                 } else {
@@ -101,24 +101,17 @@ app.put('/gasto', async(req, res) => {
 
     req.on('end', async() => {
 
-        const datosgasto = {
-            id: req.query.id,
-            roommate: body.roommate,
-            descripcion: body.descripcion,
-            monto: body.monto
-        }
-
         let db = await fs.readFile("db.json", 'utf-8');
         db = JSON.parse(db);
 
-        // busco registro a modificar
-        const gasto = db.gastos.find(g => g.id == datosgasto.id);
-
-        // actualizo datos
-        gasto.roommate = datosgasto.roommate;
-        gasto.descripcion = datosgasto.descripcion;
-        gasto.monto = datosgasto.monto;
-
+        db.gastos.map((gasto) => {
+            if (gasto.id == req.query.id) {
+                gasto.roommate = body.roommate
+                gasto.monto = body.monto
+                gasto.descripcion = body.descripcion
+            }
+        })    
+            
         await fs.writeFile('db.json', JSON.stringify(db), 'utf-8');
 
         // retorno  datos al index.html
